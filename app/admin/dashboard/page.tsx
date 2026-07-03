@@ -12,6 +12,10 @@ export default async function AdminDashboardPage() {
   const supabaseReady = isSupabaseConfigured();
   let adminEmail = "";
 
+  if (!supabaseReady && process.env.NODE_ENV === "production") {
+    redirect("/admin/login?setup=required");
+  }
+
   if (supabaseReady) {
     const supabase = await createClient();
     const {
