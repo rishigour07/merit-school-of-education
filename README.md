@@ -33,7 +33,7 @@ Admin routes:
 - `http://localhost:3000/admin/login`
 - `http://localhost:3000/admin/dashboard`
 
-Without Supabase variables, the public site remains available and enquiries can still validate and open WhatsApp, but they are not persisted. The demo CMS is available only during local development; production blocks dashboard access until Supabase Auth is configured.
+Without Supabase variables, the public site remains available and enquiries can still validate and open WhatsApp, but they are not persisted. The demo CMS is available only during local development; production blocks dashboard access until Supabase Auth is configured and `ADMIN_CMS_ENABLED=true` is set on the server.
 
 ## Environment Variables
 

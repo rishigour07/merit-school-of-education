@@ -10,9 +10,10 @@ export const metadata = {
 
 export default async function AdminDashboardPage() {
   const supabaseReady = isSupabaseConfigured();
+  const adminEnabled = process.env.ADMIN_CMS_ENABLED === "true";
   let adminEmail = "";
 
-  if (!supabaseReady && process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && (!supabaseReady || !adminEnabled)) {
     redirect("/admin/login?setup=required");
   }
 
