@@ -9,7 +9,7 @@ export const defaultContent = {
     description:
       "A trusted English and Hindi medium school in Rampura for Play Group to 10th Class, focused on academic excellence, discipline, confidence and strong values.",
     ctaText: "Explore Admissions",
-    heroImageUrl: schoolPhotos.hero,
+    heroImageUrl: schoolPhotos.campus,
     admissionStatusText: school.admission
   },
   about: {

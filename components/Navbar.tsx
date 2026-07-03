@@ -95,9 +95,7 @@ export default function Navbar({ settings, contact }: { settings?: SiteSettingsC
     <motion.header
       ref={headerRef}
       className="fixed inset-x-0 top-0 z-[80]"
-      initial={{ y: -24, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      initial={false}
     >
       <div className="hidden border-b border-white/10 bg-royal-800 text-white lg:block">
         <div className="container-pad flex h-10 items-center justify-between text-xs font-bold">

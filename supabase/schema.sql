@@ -447,7 +447,7 @@ values (
   'A trusted English and Hindi medium school in Rampura where education, discipline and character help every child grow with confidence.',
   'A trusted English and Hindi medium school in Rampura for Play Group to 10th Class, focused on academic excellence, discipline, confidence and strong values.',
   'Explore Admissions',
-  'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=85',
+  '/assets/merit-school-campus.webp',
   'Admission Open 2025-26'
 ) on conflict do nothing;
 
