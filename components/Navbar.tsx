@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import AdmissionModalTrigger, { admissionModalEvent } from "@/components/AdmissionModalTrigger";
 import { navLinks, school } from "@/lib/school";
+import type { ContactContent, SiteSettingsContent } from "@/lib/content";
 
 type DropdownItem = { label: string; href?: string; action?: "enquiry" };
 
@@ -53,11 +54,16 @@ const dropdowns: Record<string, DropdownItem[]> = {
   ]
 };
 
-export default function Navbar() {
+export default function Navbar({ settings, contact }: { settings?: SiteSettingsContent; contact?: ContactContent }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
   const [desktopOpen, setDesktopOpen] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const brandName = settings?.schoolName || school.name;
+  const shortBrandName = brandName.replace(/\s+of Education.*$/i, "") || brandName;
+  const primaryPhone = contact?.phoneNumbers[0] || school.phones[0];
+  const contactEmail = contact?.email || school.email;
+  const instagramHandle = (contact?.instagramHandle || school.instagram).replace(/^@/, "");
 
   function closeMenus() {
     setIsOpen(false);
@@ -104,16 +110,16 @@ export default function Navbar() {
             <span>DISE Code: {school.diseCode}</span>
           </div>
           <div className="flex items-center gap-5 text-white/86">
-            <a href={`tel:${school.phones[0]}`} className="focus-ring inline-flex items-center gap-2 rounded hover:text-gold-200">
+            <a href={`tel:${primaryPhone}`} className="focus-ring inline-flex items-center gap-2 rounded hover:text-gold-200">
               <Phone className="h-3.5 w-3.5" />
-              {school.phones[0]}
+              {primaryPhone}
             </a>
-            <a href={`mailto:${school.email}`} className="focus-ring inline-flex items-center gap-2 rounded hover:text-gold-200">
+            <a href={`mailto:${contactEmail}`} className="focus-ring inline-flex items-center gap-2 rounded hover:text-gold-200">
               <Mail className="h-3.5 w-3.5" />
-              {school.email}
+              {contactEmail}
             </a>
             <a
-              href={`https://www.instagram.com/${school.instagram}`}
+              href={`https://www.instagram.com/${instagramHandle}`}
               target="_blank"
               rel="noreferrer"
               className="focus-ring inline-flex items-center gap-2 rounded hover:text-gold-200"
@@ -129,10 +135,10 @@ export default function Navbar() {
         <div className="container-pad flex h-24 items-center justify-between lg:h-[88px]">
           <Link href="/#home" onClick={closeMenus} className="focus-ring flex shrink-0 items-center gap-3 rounded-md" aria-label="Merit School of Education home">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-royal-100 bg-white p-1 shadow-[0_8px_24px_rgba(16,24,40,0.10)] sm:h-16 sm:w-16 sm:p-1.5">
-              <Image src="/assets/logo.png" alt="Merit School of Education Rampura Logo" width={128} height={128} sizes="(min-width: 640px) 60px, 44px" className="h-11 w-11 object-contain sm:h-[60px] sm:w-[60px]" priority />
+              <Image src="/assets/logo.png" alt={`${brandName} Logo`} width={128} height={128} sizes="(min-width: 640px) 60px, 44px" className="h-11 w-11 object-contain sm:h-[60px] sm:w-[60px]" priority />
             </span>
             <span className="min-w-0">
-              <span className="block whitespace-nowrap text-base font-bold text-royal-800 sm:text-xl">Merit School</span>
+              <span className="block max-w-[10rem] truncate text-base font-bold text-royal-800 sm:max-w-[13rem] sm:text-xl">{shortBrandName}</span>
               <span className="block whitespace-nowrap text-sm font-bold text-slate-500">Rampura, Harda</span>
             </span>
           </Link>

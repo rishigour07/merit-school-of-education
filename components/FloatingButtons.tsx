@@ -2,9 +2,9 @@
 
 import { MessageCircle, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
-import { admissionMessage, school, whatsappNumber } from "@/lib/school";
+import { admissionMessage, school, toWhatsAppNumber } from "@/lib/school";
 
-export default function FloatingButtons() {
+export default function FloatingButtons({ phoneNumber = school.phones[0] }: { phoneNumber?: string }) {
   const [formVisible, setFormVisible] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
 
@@ -35,7 +35,7 @@ export default function FloatingButtons() {
           : "pointer-events-none translate-y-4 opacity-0 sm:pointer-events-auto sm:translate-y-0 sm:opacity-100"
     }`}>
       <a
-        href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        href={`https://wa.me/${toWhatsAppNumber(phoneNumber)}?text=${encodeURIComponent(
           admissionMessage
         )}`}
         target="_blank"
@@ -46,7 +46,7 @@ export default function FloatingButtons() {
         <MessageCircle className="h-7 w-7" />
       </a>
       <a
-        href={`tel:${school.phones[0]}`}
+        href={`tel:${phoneNumber}`}
         aria-label="Call school"
         className="focus-ring flex h-14 w-14 items-center justify-center rounded-full bg-royal-700 text-white shadow-premium transition hover:-translate-y-1 hover:bg-royal-800 sm:hidden"
       >

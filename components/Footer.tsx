@@ -12,6 +12,7 @@ import {
   Phone
 } from "lucide-react";
 import { navLinks, school } from "@/lib/school";
+import type { ContactContent, SiteSettingsContent } from "@/lib/content";
 
 const admissionLinks = [
   { label: school.admission, href: "/#admissions", icon: BadgeCheck },
@@ -20,8 +21,13 @@ const admissionLinks = [
   { label: "Parent Enquiry", href: "/#enquiry", icon: MessageCircle }
 ];
 
-export default function Footer() {
+export default function Footer({ settings, contact }: { settings?: SiteSettingsContent; contact?: ContactContent }) {
   const mapsUrl = "https://www.google.com/maps/search/?api=1&query=Merit%20School%20of%20Education%20Rampura%20Sirali%20Harda%20Madhya%20Pradesh";
+  const address = contact?.address || school.address;
+  const phones = contact?.phoneNumbers || school.phones;
+  const email = contact?.email || school.email;
+  const instagramHandle = (contact?.instagramHandle || school.instagram).replace(/^@/, "");
+  const officeTime = contact?.officeTiming || school.officeTime;
   return (
     <footer className="bg-royal-900 text-white">
       <div className="container-pad grid gap-8 py-12 md:grid-cols-2 xl:grid-cols-[1.2fr_0.7fr_0.85fr_1.05fr]">
@@ -38,15 +44,14 @@ export default function Footer() {
               />
             </span>
             <div>
-              <h2 className="text-xl font-bold">{school.name}</h2>
+              <h2 className="text-xl font-bold">{settings?.schoolName || school.name}</h2>
               <p className="mt-1 text-sm font-semibold text-white/68">
                 {school.taglineHindi}
               </p>
             </div>
           </Link>
           <p className="mt-6 max-w-md text-sm leading-7 text-white/72">
-            Quality education from Play Group to 10th Class with academic focus,
-            discipline, activities and strong values.
+            {settings?.footerText || "Quality education from Play Group to 10th Class with academic focus, discipline, activities and strong values."}
           </p>
         </div>
 
@@ -103,38 +108,38 @@ export default function Footer() {
           <div className="mt-5 grid gap-4 text-sm font-semibold leading-6 text-white/72">
             <a href={mapsUrl} target="_blank" rel="noreferrer" className="focus-ring flex gap-3 rounded transition hover:text-white">
               <MapPin className="mt-1 h-4 w-4 shrink-0 text-gold-200" />
-              {school.address}
+              {address}
             </a>
             <div className="flex gap-3">
               <Phone className="mt-1 h-4 w-4 shrink-0 text-gold-200" />
               <span className="flex flex-wrap gap-x-3 gap-y-1">
-                {school.phones.map((phone) => (
+                {phones.map((phone) => (
                   <a key={phone} href={`tel:${phone}`} className="focus-ring rounded transition hover:text-white">{phone}</a>
                 ))}
               </span>
             </div>
-            <a href={`mailto:${school.email}`} className="focus-ring flex gap-3 rounded transition hover:text-white">
+            <a href={`mailto:${email}`} className="focus-ring flex gap-3 rounded transition hover:text-white">
               <Mail className="mt-1 h-4 w-4 shrink-0 text-gold-200" />
-              {school.email}
+              {email}
             </a>
-            <a href={`https://www.instagram.com/${school.instagram}`} target="_blank" rel="noreferrer" className="focus-ring flex gap-3 rounded transition hover:text-white">
+            <a href={`https://www.instagram.com/${instagramHandle}`} target="_blank" rel="noreferrer" className="focus-ring flex gap-3 rounded transition hover:text-white">
               <Instagram className="mt-1 h-4 w-4 shrink-0 text-gold-200" />
-              @{school.instagram}
+              @{instagramHandle}
             </a>
             <p className="flex gap-3">
               <Clock className="mt-1 h-4 w-4 shrink-0 text-gold-200" />
-              {school.officeTime}
+              {officeTime}
             </p>
           </div>
         </div>
       </div>
       <div className="border-t border-white/10 py-5">
         <div className="container-pad flex flex-col gap-3 text-sm font-semibold text-white/58 sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; 2026 Merit School of Education Rampura. All Rights Reserved.</p>
+          <p>&copy; {settings?.copyrightText || "2026 Merit School of Education Rampura. All Rights Reserved."}</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Link href="/privacy-policy" className="focus-ring rounded transition hover:text-white">Privacy Policy</Link>
             <Link href="/terms-and-conditions" className="focus-ring rounded transition hover:text-white">Terms & Conditions</Link>
-            <span>Designed & Developed by Kamkimat Technologies</span>
+            <span>{settings?.designedByText || "Designed & Developed by Kamkimat Technologies"}</span>
           </div>
         </div>
       </div>

@@ -1,11 +1,13 @@
 -- Merit School of Education Rampura CMS schema
--- Run this in the Supabase SQL editor, then create one admin user in Supabase Auth.
+-- Run this in the Supabase SQL editor, create one user in Supabase Auth, then set
+-- that user's app_metadata role to "admin" as documented in README.md.
 
 create extension if not exists pgcrypto;
 
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -13,9 +15,25 @@ begin
 end;
 $$;
 
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end $$;
+
 create table if not exists public.site_settings (
   id uuid primary key default gen_random_uuid(),
   school_name text not null default 'Merit School of Education Rampura',
+  homepage_headline text,
+  homepage_subtitle text,
+  about_text text,
+  phone_number text,
+  email text,
+  address text,
+  school_timing text,
+  instagram_handle text,
+  admission_cta_text text,
   logo_url text default '/assets/logo.png',
   footer_text text,
   copyright_text text,
@@ -160,6 +178,7 @@ create table if not exists public.teachers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   designation text,
+  qualification text,
   subject text,
   experience text,
   photo_url text,
@@ -197,6 +216,21 @@ create table if not exists public.enquiries (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  phone_number text not null,
+  email text,
+  subject text not null,
+  message text not null,
+  status text not null default 'New'
+    check (status in ('New', 'Replied', 'Closed')),
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.contact_details (
   id uuid primary key default gen_random_uuid(),
   address text,
@@ -227,6 +261,17 @@ create table if not exists public.seo_settings (
   updated_at timestamptz not null default now()
 );
 
+alter table public.site_settings add column if not exists homepage_headline text;
+alter table public.site_settings add column if not exists homepage_subtitle text;
+alter table public.site_settings add column if not exists about_text text;
+alter table public.site_settings add column if not exists phone_number text;
+alter table public.site_settings add column if not exists email text;
+alter table public.site_settings add column if not exists address text;
+alter table public.site_settings add column if not exists school_timing text;
+alter table public.site_settings add column if not exists instagram_handle text;
+alter table public.site_settings add column if not exists admission_cta_text text;
+alter table public.teachers add column if not exists qualification text;
+
 do $$
 declare
   table_name text;
@@ -234,7 +279,7 @@ begin
   foreach table_name in array array[
     'site_settings', 'hero_section', 'about_section', 'admission_info',
     'academics', 'facilities', 'activities', 'gallery_images', 'notices',
-    'events', 'teachers', 'testimonials', 'enquiries', 'contact_details',
+    'events', 'teachers', 'testimonials', 'enquiries', 'contact_messages', 'contact_details',
     'seo_settings'
   ]
   loop
@@ -250,38 +295,58 @@ begin
   end loop;
 end $$;
 
+drop policy if exists "Public can read active site settings" on public.site_settings;
 create policy "Public can read active site settings" on public.site_settings
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active hero" on public.hero_section;
 create policy "Public can read active hero" on public.hero_section
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active about" on public.about_section;
 create policy "Public can read active about" on public.about_section
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active admission" on public.admission_info;
 create policy "Public can read active admission" on public.admission_info
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active academics" on public.academics;
 create policy "Public can read active academics" on public.academics
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active facilities" on public.facilities;
 create policy "Public can read active facilities" on public.facilities
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active activities" on public.activities;
 create policy "Public can read active activities" on public.activities
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active gallery" on public.gallery_images;
 create policy "Public can read active gallery" on public.gallery_images
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active notices" on public.notices;
 create policy "Public can read active notices" on public.notices
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active events" on public.events;
 create policy "Public can read active events" on public.events
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active teachers" on public.teachers;
 create policy "Public can read active teachers" on public.teachers
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active testimonials" on public.testimonials;
 create policy "Public can read active testimonials" on public.testimonials
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active contact" on public.contact_details;
 create policy "Public can read active contact" on public.contact_details
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
+drop policy if exists "Public can read active seo" on public.seo_settings;
 create policy "Public can read active seo" on public.seo_settings
-  for select to anon, authenticated using (is_active = true);
+  for select to anon using (is_active = true);
 
+drop policy if exists "Anyone can create admission enquiry" on public.enquiries;
 create policy "Anyone can create admission enquiry" on public.enquiries
-  for insert to anon, authenticated
+  for insert to anon
   with check (parent_name <> '' and student_name <> '' and phone_number <> '');
+
+drop policy if exists "Anyone can create contact message" on public.contact_messages;
+create policy "Anyone can create contact message" on public.contact_messages
+  for insert to anon
+  with check (name <> '' and phone_number <> '' and subject <> '' and message <> '');
 
 do $$
 declare
@@ -290,11 +355,16 @@ begin
   foreach table_name in array array[
     'site_settings', 'hero_section', 'about_section', 'admission_info',
     'academics', 'facilities', 'activities', 'gallery_images', 'notices',
-    'events', 'teachers', 'testimonials', 'enquiries', 'contact_details',
+    'events', 'teachers', 'testimonials', 'enquiries', 'contact_messages', 'contact_details',
     'seo_settings'
   ]
   loop
-    execute format('create policy "Admin can manage %s" on public.%I for all to authenticated using (true) with check (true)', table_name, table_name);
+    execute format('drop policy if exists "Admin can manage %s" on public.%I', table_name, table_name);
+    execute format(
+      'create policy "Admin can manage %s" on public.%I for all to authenticated using (((select auth.jwt()) -> ''app_metadata'' ->> ''role'') = ''admin'') with check (((select auth.jwt()) -> ''app_metadata'' ->> ''role'') = ''admin'')',
+      table_name,
+      table_name
+    );
   end loop;
 end $$;
 
@@ -302,22 +372,23 @@ insert into storage.buckets (id, name, public)
 values ('website-assets', 'website-assets', true)
 on conflict (id) do update set public = excluded.public;
 
-create policy "Public can read website assets" on storage.objects
-  for select to anon, authenticated
-  using (bucket_id = 'website-assets');
+drop policy if exists "Public can read website assets" on storage.objects;
 
+drop policy if exists "Admins can upload website assets" on storage.objects;
 create policy "Admins can upload website assets" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'website-assets');
+  with check (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin');
 
+drop policy if exists "Admins can update website assets" on storage.objects;
 create policy "Admins can update website assets" on storage.objects
   for update to authenticated
-  using (bucket_id = 'website-assets')
-  with check (bucket_id = 'website-assets');
+  using (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin')
+  with check (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin');
 
+drop policy if exists "Admins can delete website assets" on storage.objects;
 create policy "Admins can delete website assets" on storage.objects
   for delete to authenticated
-  using (bucket_id = 'website-assets');
+  using (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin');
 
 insert into public.site_settings (school_name, logo_url, footer_text, copyright_text)
 values (

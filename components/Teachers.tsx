@@ -39,7 +39,7 @@ export default function Teachers({ items }: { items: TeacherProfile[] }) {
                   </h3>
                   <div className="mt-3 flex flex-wrap gap-2 text-sm font-bold text-slate-600">
                     <span className="rounded-full bg-royal-50 px-3 py-1">
-                      {teacher.subject || "Academic Guidance"}
+                      {teacher.qualification || teacher.subject || "Academic Guidance"}
                     </span>
                     <span className="rounded-full bg-gold-50 px-3 py-1">
                       {teacher.experience || "Experienced"}

@@ -6,5 +6,10 @@ export const metadata = {
 };
 
 export default function AdminLoginPage() {
-  return <LoginForm supabaseReady={isSupabaseConfigured()} />;
+  return (
+    <LoginForm
+      supabaseReady={isSupabaseConfigured()}
+      adminEnabled={process.env.ADMIN_CMS_ENABLED === "true"}
+    />
+  );
 }

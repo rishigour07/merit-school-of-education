@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Loader2,
   LogOut,
+  Mail,
   Menu,
   MessageCircle,
   Phone,
@@ -26,7 +27,6 @@ import {
   adminModules,
   adminTables,
   dashboardQuickActions,
-  enquiryStatuses,
   type AdminField,
   type AdminModule
 } from "@/lib/admin-config";
@@ -135,6 +135,7 @@ function demoRecords(): RecordsMap {
     teachers: defaultContent.teachers.map((item, index) => ({
       name: item.name,
       designation: item.designation,
+      qualification: item.qualification,
       subject: item.subject,
       experience: item.experience,
       photo_url: item.photoUrl,
@@ -151,6 +152,7 @@ function demoRecords(): RecordsMap {
       sort_order: index
     })),
     enquiries: [],
+    contact_messages: [],
     contact_details: [
       {
         address: defaultContent.contact.address,
@@ -185,6 +187,15 @@ function demoRecords(): RecordsMap {
     site_settings: [
       {
         school_name: school.name,
+        homepage_headline: defaultContent.hero.mainHeading,
+        homepage_subtitle: defaultContent.hero.subheading,
+        about_text: defaultContent.about.description,
+        phone_number: defaultContent.contact.phoneNumbers[0],
+        email: defaultContent.contact.email,
+        address: defaultContent.contact.address,
+        school_timing: defaultContent.contact.officeTiming,
+        instagram_handle: defaultContent.contact.instagramHandle,
+        admission_cta_text: defaultContent.hero.ctaText,
         logo_url: "/assets/logo.png",
         footer_text:
           "Quality education from Play Group to 10th Class with discipline, activities and values.",
@@ -265,6 +276,7 @@ export default function AdminDashboard({
     : "dashboard";
   const [editingRecord, setEditingRecord] = useState<CmsRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -278,9 +290,11 @@ export default function AdminDashboard({
   );
   const tableName = activeModule.table;
   const currentRows = tableName ? records[tableName] || [] : [];
-  const filteredRows = currentRows.filter((record) =>
-    recordPreview(record, activeModule.columns || []).includes(searchTerm.toLowerCase())
-  );
+  const filteredRows = currentRows.filter((record) => {
+    const matchesSearch = recordPreview(record, activeModule.columns || []).includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "All" || String(record.status || "New") === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const form = useForm<CmsRecord>({
     resolver: zodResolver(cmsRecordSchema),
@@ -360,6 +374,7 @@ export default function AdminDashboard({
   function selectModule(key: string) {
     setEditingRecord(null);
     setSearchTerm("");
+    setStatusFilter("All");
     setMobileMenuOpen(false);
     router.replace(key === "dashboard" ? "/admin/dashboard" : `/admin/dashboard?section=${key}`, { scroll: false });
   }
@@ -448,7 +463,7 @@ export default function AdminDashboard({
     }
   }
 
-  async function updateEnquiryStatus(record: CmsRecord, status: string) {
+  async function updateSubmissionStatus(record: CmsRecord, status: string) {
     if (!tableName) return;
 
     setRecords((current) => ({
@@ -465,6 +480,15 @@ export default function AdminDashboard({
   }
 
   async function handleImageUpload(field: AdminField, file: File) {
+    if (!file.type.startsWith("image/")) {
+      showToast({ type: "error", message: "Please choose a valid image file." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast({ type: "error", message: "Image must be smaller than 5 MB." });
+      return;
+    }
+
     const previewUrl = URL.createObjectURL(file);
     form.setValue(field.name, previewUrl);
 
@@ -475,8 +499,8 @@ export default function AdminDashboard({
 
     try {
       const supabase = createClient();
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${activeModule.key}/${file.lastModified}-${file.name.replace(/\s+/g, "-")}.${ext}`;
+      const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
+      const path = `${activeModule.key}/${file.lastModified}-${safeName}`;
       const { error } = await supabase.storage.from(storageBucket).upload(path, file, {
         cacheControl: "3600",
         upsert: false
@@ -498,20 +522,26 @@ export default function AdminDashboard({
   }
 
   const overviewCards = [
-    { label: "Total Enquiries", value: records.enquiries?.length || 0 },
+    { label: "Admission Enquiries", value: records.enquiries?.length || 0 },
+    { label: "Contact Messages", value: records.contact_messages?.length || 0 },
     { label: "Gallery Images", value: records.gallery_images?.length || 0 },
     { label: "Total Notices", value: records.notices?.length || 0 },
     { label: "Total Events", value: records.events?.length || 0 },
-    {
-      label: "Admission Status",
-      value: String(records.admission_info?.[0]?.status || "open").toUpperCase()
-    }
+    { label: "Faculty Members", value: records.teachers?.length || 0 }
   ];
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-ink">
+      {mobileMenuOpen ? (
+        <button
+          type="button"
+          aria-label="Close admin navigation"
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-ink/35 backdrop-blur-[1px] lg:hidden"
+        />
+      ) : null}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-80 border-r border-slate-200 bg-white shadow-premium transition lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[min(20rem,calc(100vw-1.5rem))] border-r border-slate-200 bg-white shadow-premium transition lg:w-80 lg:translate-x-0 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -615,7 +645,7 @@ export default function AdminDashboard({
           </div>
         </header>
 
-        <main className="min-w-0 p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 p-3 sm:p-6 lg:p-8">
           {!supabaseReady ? (
             <div className="mb-6 rounded-lg border border-gold-200 bg-gold-50 p-4 text-sm font-bold leading-6 text-royal-900">
               Supabase env vars are not configured yet. This dashboard is running
@@ -643,7 +673,7 @@ export default function AdminDashboard({
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">
                   {activeKey === "dashboard" ? "Overview" : `CMS / ${activeModule.label}`}
                 </p>
-                <h2 className="mt-2 text-2xl font-black text-ink">
+                <h2 className="mt-2 text-xl font-bold leading-7 text-ink sm:text-2xl sm:leading-8">
                   {activeModule.description}
                 </h2>
               </div>
@@ -666,7 +696,7 @@ export default function AdminDashboard({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-black uppercase tracking-[0.14em] text-royal-600">
-                      {activeModule.kind === "enquiries" ? "Manage Enquiries" : "Content Form"}
+                      {activeModule.kind === "enquiries" ? `Manage ${activeModule.label}` : "Content Form"}
                     </p>
                     <h3 className="mt-1 text-xl font-black text-ink">
                       {editingRecord ? "Edit Record" : activeModule.kind === "singleton" ? "Update Section" : "Add New"}
@@ -688,7 +718,7 @@ export default function AdminDashboard({
                 </div>
 
                 {activeModule.kind === "enquiries" ? (
-                  <EnquiryTools />
+                  <SubmissionTools module={activeModule} />
                 ) : (
                   <form
                     onSubmit={form.handleSubmit(handleSave)}
@@ -727,7 +757,7 @@ export default function AdminDashboard({
               </section>
 
               <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-sm font-black uppercase tracking-[0.14em] text-royal-600">
                       Records
@@ -736,15 +766,33 @@ export default function AdminDashboard({
                       {currentRows.length} item{currentRows.length === 1 ? "" : "s"}
                     </h3>
                   </div>
-                  <label className="relative block">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search records"
-                      className="focus-ring w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-bold text-slate-700 sm:w-72"
-                    />
-                  </label>
+                  <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[auto_auto]">
+                    {activeModule.statusOptions ? (
+                      <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                        Status
+                        <select
+                          value={statusFilter}
+                          onChange={(event) => setStatusFilter(event.target.value)}
+                          className="focus-ring rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold normal-case tracking-normal text-slate-700"
+                        >
+                          <option>All</option>
+                          {activeModule.statusOptions.map((status) => <option key={status}>{status}</option>)}
+                        </select>
+                      </label>
+                    ) : null}
+                    <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                      Search
+                      <span className="relative block">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          value={searchTerm}
+                          onChange={(event) => setSearchTerm(event.target.value)}
+                          placeholder="Search records"
+                          className="focus-ring w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-bold normal-case tracking-normal text-slate-700 sm:w-64"
+                        />
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 {loading ? (
@@ -757,7 +805,7 @@ export default function AdminDashboard({
                     rows={filteredRows}
                     onEdit={(record) => setEditingRecord(record)}
                     onDelete={(record) => setDeleteTarget(record)}
-                    onStatusChange={updateEnquiryStatus}
+                    onStatusChange={updateSubmissionStatus}
                   />
                 ) : (
                   <div className="mt-8 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
@@ -926,10 +974,11 @@ function DashboardHome({
   onSelectModule: (key: string) => void;
 }) {
   const latestEnquiries = rows.enquiries?.slice(0, 5) || [];
+  const latestMessages = rows.contact_messages?.slice(0, 5) || [];
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         {overviewCards.map((card) => (
           <div
             key={card.label}
@@ -943,7 +992,7 @@ function DashboardHome({
         ))}
       </div>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
         <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
           <h3 className="text-2xl font-black text-ink">Quick Actions</h3>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -1009,17 +1058,38 @@ function DashboardHome({
             )}
           </div>
         </section>
+
+        <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
+          <h3 className="text-2xl font-bold text-ink">Recent Contact Messages</h3>
+          <div className="mt-5 grid gap-3">
+            {latestMessages.length ? (
+              latestMessages.map((message) => (
+                <div key={String(message.id || message.phone_number)} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="font-bold text-ink">{String(message.name || "Parent")}</p>
+                  <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-500">
+                    {String(message.subject || "Message")} | {String(message.status || "New")}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm font-bold text-slate-500">
+                No contact messages yet.
+              </p>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );
 }
 
-function EnquiryTools() {
+function SubmissionTools({ module }: { module: AdminModule }) {
+  const isContact = module.key === "contact-messages";
   return (
     <div className="mt-6 rounded-lg bg-royal-50 p-5 text-sm font-bold leading-7 text-royal-900">
-      Use the record list to change enquiry status, call parents, open WhatsApp,
-      or delete resolved entries. Public form submissions are saved to Supabase
-      when configured and still redirect to WhatsApp.
+      {isContact
+        ? "Use the records list to search messages, mark them as replied or closed, contact the sender and remove resolved entries."
+        : "Use the records list to search enquiries, update status, call parents, open WhatsApp or remove resolved entries."}
     </div>
   );
 }
@@ -1123,7 +1193,7 @@ function RecordRow({
               onChange={(event) => onStatusChange(record, event.target.value)}
               className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black"
             >
-              {enquiryStatuses.map((status) => (
+              {(module.statusOptions || ["New", "Closed"]).map((status) => (
                 <option key={status}>{status}</option>
               ))}
             </select>
@@ -1174,7 +1244,7 @@ function RecordCard({
                 onChange={(event) => onStatusChange(record, event.target.value)}
                 className="mt-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-black"
               >
-                {enquiryStatuses.map((status) => (
+                {(module.statusOptions || ["New", "Closed"]).map((status) => (
                   <option key={status}>{status}</option>
                 ))}
               </select>
@@ -1205,6 +1275,8 @@ function ActionButtons({
   onDelete: (record: CmsRecord) => void;
 }) {
   const phone = String(record.phone_number || "");
+  const email = String(record.email || "");
+  const isContactMessage = module.key === "contact-messages";
   const message = [
     "Hello Merit School, I want admission information.",
     "",
@@ -1225,11 +1297,27 @@ function ActionButtons({
         >
           Edit
         </button>
+      ) : isContactMessage ? (
+        <>
+          {email ? (
+            <a href={`mailto:${email}?subject=${encodeURIComponent(`Re: ${String(record.subject || "Your message to Merit School")}`)}`} className="focus-ring inline-flex items-center gap-1 rounded-full bg-gold-50 px-3 py-2 text-xs font-black text-gold-800">
+              <Mail className="h-3.5 w-3.5" />
+              Reply
+            </a>
+          ) : null}
+          {phone ? (
+            <a href={`tel:${phone}`} className="focus-ring inline-flex items-center gap-1 rounded-full bg-royal-50 px-3 py-2 text-xs font-black text-royal-800">
+              <Phone className="h-3.5 w-3.5" />
+              Call
+            </a>
+          ) : null}
+        </>
       ) : (
         <>
           <a
             href={`https://wa.me/${toWhatsAppNumber(phone)}?text=${encodeURIComponent(message)}`}
             target="_blank"
+            rel="noreferrer"
             className="focus-ring inline-flex items-center gap-1 rounded-full bg-leaf-50 px-3 py-2 text-xs font-black text-leaf-700"
           >
             <MessageCircle className="h-3.5 w-3.5" />

@@ -26,6 +26,7 @@ export type Database = {
       teachers: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
       testimonials: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
       enquiries: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
+      contact_messages: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
       contact_details: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
       seo_settings: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
     };

@@ -19,10 +19,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginForm({ supabaseReady }: { supabaseReady: boolean }) {
+export default function LoginForm({ supabaseReady, adminEnabled }: { supabaseReady: boolean; adminEnabled: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectedFrom = searchParams.get("redirectedFrom") || "/admin/dashboard";
+  const loginIssue = searchParams.get("error");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +38,7 @@ export default function LoginForm({ supabaseReady }: { supabaseReady: boolean })
   async function onSubmit(values: LoginFormValues) {
     setError("");
 
-    if (!supabaseReady || !isBrowserSupabaseConfigured()) {
+    if (!supabaseReady || !adminEnabled || !isBrowserSupabaseConfigured()) {
       setError(
         "Supabase is not configured yet. Add env vars and create an admin user first."
       );
@@ -62,29 +63,28 @@ export default function LoginForm({ supabaseReady }: { supabaseReady: boolean })
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#EEF6FF_0%,#FFFFFF_52%,#FFF8DA_100%)] px-4 py-10">
-      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+    <div className="min-h-screen bg-[#f4f7fb] px-4 py-6 sm:py-8 lg:py-10">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-5xl items-center gap-8 lg:min-h-[calc(100vh-5rem)] lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
         <div className="hidden lg:block">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-royal-600">
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-royal-600">
             Merit School CMS
           </p>
-          <h1 className="mt-4 text-5xl font-black leading-tight text-ink">
-            Manage a premium school website without touching code.
+          <h1 className="mt-4 max-w-[14ch] text-[2.65rem] font-bold leading-[1.14] text-ink xl:text-5xl">
+            Manage school content with clarity and confidence.
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-            Update admissions, notices, gallery, teachers, events, SEO settings
-            and parent enquiries from one secure dashboard.
+          <p className="mt-5 max-w-lg text-base leading-7 text-slate-600 xl:text-lg xl:leading-8">
+            Keep admissions, notices, gallery, faculty, events and parent communication organized in one secure dashboard.
           </p>
-          <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-2">
+          <div className="mt-7 grid max-w-lg gap-3 sm:grid-cols-2">
             {["Supabase Auth", "Protected Dashboard", "Image Storage", "SEO CMS"].map((item) => (
-              <div key={item} className="rounded-lg border border-royal-100 bg-white p-4 text-sm font-black text-royal-800 shadow-sm">
+              <div key={item} className="rounded-lg border border-royal-100 bg-white p-4 text-sm font-bold text-royal-800 shadow-sm">
                 {item}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-md rounded-lg border border-royal-100 bg-white p-6 shadow-premium sm:p-8">
+        <div className="mx-auto w-full max-w-lg rounded-lg border border-royal-100 bg-white p-5 shadow-premium sm:p-7 lg:p-8">
           <div className="flex items-center gap-4">
             <span className="flex h-16 w-16 items-center justify-center rounded-full border border-royal-100 bg-white p-1 shadow-soft">
               <Image
@@ -97,34 +97,34 @@ export default function LoginForm({ supabaseReady }: { supabaseReady: boolean })
               />
             </span>
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.14em] text-royal-600">
+              <p className="text-sm font-bold uppercase tracking-[0.14em] text-royal-600">
                 Admin Login
               </p>
-              <h2 className="text-2xl font-black text-ink">Merit School</h2>
+              <h2 className="text-2xl font-bold text-ink">Merit School</h2>
             </div>
           </div>
 
-          {!supabaseReady ? (
-            <div className="mt-6 rounded-lg border border-gold-200 bg-gold-50 p-4 text-sm font-bold leading-6 text-royal-900">
-              Setup required: add{" "}
-              <code className="break-all rounded bg-white/70 px-1 py-0.5 text-[0.82em]">
-                NEXT_PUBLIC_SUPABASE_URL
-              </code>{" "}
-              and{" "}
-              <code className="break-all rounded bg-white/70 px-1 py-0.5 text-[0.82em]">
-                NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-              </code>{" "}
-              to{" "}
-              <code className="break-all rounded bg-white/70 px-1 py-0.5 text-[0.82em]">
-                .env.local
-              </code>
-              , run the SQL schema, then create an admin user in Supabase Auth.
+          {!supabaseReady || !adminEnabled ? (
+            <div className="mt-5 rounded-lg border border-gold-200 bg-gold-50 p-4 text-sm leading-6 text-royal-900">
+              <p className="font-bold">Configuration required</p>
+              <p className="mt-1 text-royal-800">Add these values to <code className="font-bold">.env.local</code>, then run the SQL schema and create an admin user:</p>
+              <div className="mt-3 grid gap-2 font-mono text-xs font-semibold">
+                <code className="break-words rounded bg-white/80 px-3 py-2">NEXT_PUBLIC_SUPABASE_URL</code>
+                <code className="break-words rounded bg-white/80 px-3 py-2">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>
+                <code className="break-words rounded bg-white/80 px-3 py-2">ADMIN_CMS_ENABLED=true</code>
+              </div>
+            </div>
+          ) : null}
+
+          {loginIssue === "unauthorized" ? (
+            <div className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-bold leading-6 text-rose-700">
+              This account is not authorized as a school administrator.
             </div>
           ) : null}
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="mt-7 grid gap-4">
             <label className="grid gap-2">
-              <span className="text-sm font-black text-slate-700">Admin Email</span>
+              <span className="text-sm font-bold text-slate-700">Admin Email</span>
               <span className="relative">
                 <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -142,7 +142,7 @@ export default function LoginForm({ supabaseReady }: { supabaseReady: boolean })
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-black text-slate-700">Password</span>
+              <span className="text-sm font-bold text-slate-700">Password</span>
               <span className="relative">
                 <LockKeyhole className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -168,7 +168,7 @@ export default function LoginForm({ supabaseReady }: { supabaseReady: boolean })
             <button
               type="submit"
               disabled={loading}
-              className="focus-ring mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-royal-700 px-6 py-4 text-base font-black text-white shadow-soft transition hover:bg-royal-800 disabled:opacity-60"
+              className="focus-ring mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-royal-700 px-6 py-4 text-base font-bold text-white shadow-soft transition hover:bg-royal-800 disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
               Login to Dashboard

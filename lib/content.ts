@@ -51,6 +51,7 @@ export type TeacherProfile = {
   id?: string;
   name: string;
   designation: string;
+  qualification: string;
   subject: string;
   experience: string;
   photoUrl?: string;
@@ -75,6 +76,13 @@ export type ContactContent = {
   googleMapEmbedUrl?: string;
 };
 
+export type SiteSettingsContent = {
+  schoolName: string;
+  footerText: string;
+  copyrightText: string;
+  designedByText: string;
+};
+
 export type PublicContent = {
   hero: HeroContent;
   about: AboutContent;
@@ -88,6 +96,7 @@ export type PublicContent = {
   teachers: TeacherProfile[];
   testimonials: Testimonial[];
   contact: ContactContent;
+  siteSettings: SiteSettingsContent;
 };
 
 export const defaultContent: PublicContent = {
@@ -208,6 +217,7 @@ export const defaultContent: PublicContent = {
     {
       name: "Academic Faculty",
       designation: "Teaching Team",
+      qualification: "Trained Educators",
       subject: "All Subjects",
       experience: "Experienced",
       photoUrl: schoolPhotos.teacher,
@@ -231,6 +241,12 @@ export const defaultContent: PublicContent = {
     email: school.email,
     instagramHandle: school.instagram,
     officeTiming: school.officeTime
+  },
+  siteSettings: {
+    schoolName: school.name,
+    footerText: "Quality education from Play Group to 10th Class with discipline, activities and values.",
+    copyrightText: "2026 Merit School of Education Rampura. All Rights Reserved.",
+    designedByText: "Designed & Developed by Kamkimat Technologies"
   }
 };
 
@@ -277,6 +293,7 @@ export async function getPublicContent(): Promise<PublicContent> {
   try {
     const supabase = await createClient();
     const [
+      siteSettingsResult,
       heroResult,
       aboutResult,
       admissionResult,
@@ -290,6 +307,7 @@ export async function getPublicContent(): Promise<PublicContent> {
       testimonialsResult,
       contactResult
     ] = await Promise.all([
+      supabase.from("site_settings").select("*").eq("is_active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("hero_section").select("*").eq("is_active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("about_section").select("*").eq("is_active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("admission_info").select("*").eq("is_active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -304,24 +322,28 @@ export async function getPublicContent(): Promise<PublicContent> {
       supabase.from("contact_details").select("*").eq("is_active", true).order("updated_at", { ascending: false }).limit(1).maybeSingle()
     ]);
 
+    const settings = siteSettingsResult.data as CmsRow | null;
     const hero = heroResult.data as CmsRow | null;
     const about = aboutResult.data as CmsRow | null;
     const admission = admissionResult.data as CmsRow | null;
     const contact = contactResult.data as CmsRow | null;
 
+    const contactPhones = list(contact, "phone_numbers", defaultContent.contact.phoneNumbers);
+    const primaryPhone = text(settings, "phone_number", "");
+
     return {
       hero: {
         badgeText: text(hero, "badge_text", defaultContent.hero.badgeText),
-        mainHeading: text(hero, "main_heading", defaultContent.hero.mainHeading),
-        subheading: text(hero, "subheading", defaultContent.hero.subheading),
+        mainHeading: text(settings, "homepage_headline", text(hero, "main_heading", defaultContent.hero.mainHeading)),
+        subheading: text(settings, "homepage_subtitle", text(hero, "subheading", defaultContent.hero.subheading)),
         description: text(hero, "description", defaultContent.hero.description),
-        ctaText: text(hero, "cta_text", defaultContent.hero.ctaText),
+        ctaText: text(settings, "admission_cta_text", text(hero, "cta_text", defaultContent.hero.ctaText)),
         heroImageUrl: text(hero, "hero_image_url", defaultContent.hero.heroImageUrl),
         admissionStatusText: text(hero, "admission_status_text", defaultContent.hero.admissionStatusText)
       },
       about: {
         heading: text(about, "heading", defaultContent.about.heading),
-        description: text(about, "description", defaultContent.about.description),
+        description: text(settings, "about_text", text(about, "description", defaultContent.about.description)),
         imageUrl: text(about, "image_url", defaultContent.about.imageUrl),
         values: list(about, "values", defaultContent.about.values)
       },
@@ -334,7 +356,7 @@ export async function getPublicContent(): Promise<PublicContent> {
         schoolCode: text(admission, "school_code", defaultContent.admission.schoolCode),
         diseCode: text(admission, "dise_code", defaultContent.admission.diseCode),
         documentsRequired: list(admission, "documents_required", defaultContent.admission.documentsRequired),
-        ctaText: text(admission, "cta_text", defaultContent.admission.ctaText)
+        ctaText: text(settings, "admission_cta_text", text(admission, "cta_text", defaultContent.admission.ctaText))
       },
       academics: mapCards(academicsResult.data as CmsRow[] | null, defaultContent.academics),
       facilities: mapCards(facilitiesResult.data as CmsRow[] | null, defaultContent.facilities),
@@ -346,6 +368,7 @@ export async function getPublicContent(): Promise<PublicContent> {
         id: text(row, "id", ""),
         name: text(row, "name", "Teacher"),
         designation: text(row, "designation", ""),
+        qualification: text(row, "qualification", ""),
         subject: text(row, "subject", ""),
         experience: text(row, "experience", ""),
         photoUrl: text(row, "photo_url", ""),
@@ -359,13 +382,19 @@ export async function getPublicContent(): Promise<PublicContent> {
         rating: Number(row.rating || 5)
       })) || defaultContent.testimonials,
       contact: {
-        address: text(contact, "address", defaultContent.contact.address),
-        phoneNumbers: list(contact, "phone_numbers", defaultContent.contact.phoneNumbers),
-        whatsappNumber: text(contact, "whatsapp_number", defaultContent.contact.whatsappNumber),
-        email: text(contact, "email", defaultContent.contact.email),
-        instagramHandle: text(contact, "instagram_handle", defaultContent.contact.instagramHandle),
-        officeTiming: text(contact, "office_timing", defaultContent.contact.officeTiming),
+        address: text(settings, "address", text(contact, "address", defaultContent.contact.address)),
+        phoneNumbers: primaryPhone ? [primaryPhone, ...contactPhones.filter((phone) => phone !== primaryPhone)] : contactPhones,
+        whatsappNumber: primaryPhone || text(contact, "whatsapp_number", defaultContent.contact.whatsappNumber),
+        email: text(settings, "email", text(contact, "email", defaultContent.contact.email)),
+        instagramHandle: text(settings, "instagram_handle", text(contact, "instagram_handle", defaultContent.contact.instagramHandle)),
+        officeTiming: text(settings, "school_timing", text(contact, "office_timing", defaultContent.contact.officeTiming)),
         googleMapEmbedUrl: text(contact, "google_map_embed_url", "")
+      },
+      siteSettings: {
+        schoolName: text(settings, "school_name", defaultContent.siteSettings.schoolName),
+        footerText: text(settings, "footer_text", defaultContent.siteSettings.footerText),
+        copyrightText: text(settings, "copyright_text", defaultContent.siteSettings.copyrightText),
+        designedByText: text(settings, "designed_by_text", defaultContent.siteSettings.designedByText)
       }
     };
   } catch {

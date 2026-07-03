@@ -2,6 +2,7 @@ import Link from "next/link";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import { school } from "@/lib/school";
+import { getPublicContent } from "@/lib/content";
 
 type LegalSection = {
   title: string;
@@ -15,15 +16,16 @@ type LegalDocumentProps = {
   sections: LegalSection[];
 };
 
-export default function LegalDocument({
+export default async function LegalDocument({
   eyebrow,
   title,
   introduction,
   sections
 }: LegalDocumentProps) {
+  const content = await getPublicContent();
   return (
     <>
-      <Navbar />
+      <Navbar settings={content.siteSettings} contact={content.contact} />
       <main className="bg-white pt-28 lg:pt-36">
         <header className="border-b border-royal-100 bg-mist py-12 sm:py-16">
           <div className="container-pad max-w-4xl">
@@ -73,7 +75,7 @@ export default function LegalDocument({
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer settings={content.siteSettings} contact={content.contact} />
     </>
   );
 }

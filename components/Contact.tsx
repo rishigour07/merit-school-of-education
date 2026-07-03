@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
+import ContactMessageForm from "@/components/ContactMessageForm";
 import { admissionMessage, school, toWhatsAppNumber } from "@/lib/school";
 import type { ContactContent } from "@/lib/content";
 
@@ -44,9 +45,9 @@ export default function Contact({ content }: { content?: ContactContent }) {
           />
         </Reveal>
 
-        <div className="mt-9 grid gap-6 sm:mt-10 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="mt-8 grid items-stretch gap-5 sm:mt-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-6">
           <Reveal>
-            <div className="grid gap-4">
+            <div className="grid h-full gap-4">
               <div className="flex min-w-0 gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-royal-50 text-royal-700">
                   <Phone className="h-5 w-5" />
@@ -89,31 +90,34 @@ export default function Contact({ content }: { content?: ContactContent }) {
           </Reveal>
 
           <Reveal delay={0.08}>
-            <div className="h-full rounded-lg border border-royal-100 bg-mist p-5 shadow-soft">
-              <a href={mapsUrl} target="_blank" rel="noreferrer" className="focus-ring flex min-h-[300px] items-center justify-center rounded-lg border border-dashed border-royal-200 bg-white text-center transition hover:border-royal-400">
-                <span className="max-w-md px-5">
-                  <MapPin className="mx-auto h-10 w-10 text-royal-700" />
-                  <span className="mt-4 block text-2xl font-black text-ink">Merit School Location</span>
-                  <span className="mt-3 block leading-7 text-slate-600">{contact.address}</span>
-                </span>
-              </a>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <a href={whatsappHref} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-leaf-500 px-4 py-3 text-sm font-black text-white">
-                  <MessageCircle className="h-4 w-4" /> WhatsApp
-                </a>
-                <a href={`mailto:${contact.email}`} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-black text-royal-800 shadow-sm">
-                  <Mail className="h-4 w-4" /> Email
-                </a>
-                <a href={instagramUrl} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-black text-royal-800 shadow-sm">
-                  <Instagram className="h-4 w-4" /> Instagram
-                </a>
-                <a href={mapsUrl} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-gold-300 px-4 py-3 text-sm font-black text-royal-900 sm:col-span-2 xl:col-span-3">
-                  <Navigation className="h-4 w-4" /> Get Directions
-                </a>
-              </div>
-            </div>
+            <ContactMessageForm />
           </Reveal>
         </div>
+
+        <Reveal className="mt-5 sm:mt-6" delay={0.1}>
+          <div className="grid items-center gap-5 rounded-lg border border-royal-100 bg-mist p-5 shadow-soft lg:grid-cols-[1fr_auto] lg:p-6">
+            <a href={mapsUrl} target="_blank" rel="noreferrer" className="focus-ring flex min-w-0 items-start gap-4 rounded-md">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-royal-700 shadow-sm">
+                <MapPin className="h-6 w-6" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold uppercase tracking-[0.12em] text-royal-600">Campus Location</span>
+                <span className="mt-1 block text-lg font-bold leading-7 text-ink">{contact.address}</span>
+              </span>
+            </a>
+            <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end">
+              <a href={whatsappHref} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-leaf-500 px-4 py-3 text-sm font-bold text-white">
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </a>
+              <a href={instagramUrl} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-royal-800 shadow-sm">
+                <Instagram className="h-4 w-4" /> Instagram
+              </a>
+              <a href={mapsUrl} target="_blank" rel="noreferrer" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-gold-300 px-4 py-3 text-sm font-bold text-royal-900 sm:col-span-2">
+                <Navigation className="h-4 w-4" /> Get Directions
+              </a>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

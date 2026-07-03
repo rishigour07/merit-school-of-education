@@ -29,7 +29,7 @@ export default async function Home() {
 
   return (
     <>
-      <Navbar />
+      <Navbar settings={content.siteSettings} contact={content.contact} />
       <main>
         <Hero content={content.hero} />
         <ParentDesk />
@@ -52,8 +52,8 @@ export default async function Home() {
         <EnquiryForm />
         <Contact content={content.contact} />
       </main>
-      <Footer />
-      <FloatingButtons />
+      <Footer settings={content.siteSettings} contact={content.contact} />
+      <FloatingButtons phoneNumber={content.contact.whatsappNumber} />
       <AdmissionEnquiryModal />
     </>
   );

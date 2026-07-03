@@ -27,6 +27,10 @@ export default async function AdminDashboardPage() {
       redirect("/admin/login");
     }
 
+    if (user.app_metadata?.role !== "admin") {
+      redirect("/admin/login?error=unauthorized");
+    }
+
     adminEmail = user.email || "";
   }
 

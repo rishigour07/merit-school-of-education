@@ -13,13 +13,21 @@ const sections = new Set([
   "teachers",
   "testimonials",
   "enquiries",
+  "contact-messages",
   "contact",
   "seo",
   "settings"
 ]);
 
+const aliases: Record<string, string> = {
+  faculty: "teachers",
+  "contact-messages": "contact-messages",
+  "site-settings": "settings"
+};
+
 export default async function AdminSectionPage({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
-  if (!sections.has(section)) notFound();
-  redirect(`/admin/dashboard?section=${section}`);
+  const target = aliases[section] || section;
+  if (!sections.has(target)) notFound();
+  redirect(`/admin/dashboard?section=${target}`);
 }

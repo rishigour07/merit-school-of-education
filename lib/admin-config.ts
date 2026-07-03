@@ -48,6 +48,7 @@ export type AdminModule = {
   icon: typeof LayoutDashboard;
   fields?: AdminField[];
   columns?: string[];
+  statusOptions?: string[];
 };
 
 const commonFields: AdminField[] = [
@@ -224,7 +225,7 @@ export const adminModules: AdminModule[] = [
   },
   {
     key: "teachers",
-    label: "Teachers",
+    label: "Faculty",
     table: "teachers",
     description: "Manage teacher profiles and faculty details.",
     kind: "collection",
@@ -232,13 +233,14 @@ export const adminModules: AdminModule[] = [
     fields: [
       { name: "name", label: "Teacher Name", type: "text", required: true },
       { name: "designation", label: "Designation", type: "text" },
+      { name: "qualification", label: "Qualification", type: "text" },
       { name: "subject", label: "Subject", type: "text" },
       { name: "experience", label: "Experience", type: "text" },
       { name: "photo_url", label: "Photo", type: "image" },
       { name: "short_bio", label: "Short Bio", type: "textarea" },
       ...commonFields
     ],
-    columns: ["name", "designation", "subject", "is_active"]
+    columns: ["name", "designation", "qualification", "sort_order", "is_active"]
   },
   {
     key: "testimonials",
@@ -263,7 +265,18 @@ export const adminModules: AdminModule[] = [
     description: "View admission enquiries, change status and contact parents.",
     kind: "enquiries",
     icon: MessageSquareText,
-    columns: ["parent_name", "student_name", "class_interested", "phone_number", "status", "created_at"]
+    columns: ["parent_name", "student_name", "class_interested", "phone_number", "status", "created_at"],
+    statusOptions: ["New", "Contacted", "Follow-up", "Converted", "Closed"]
+  },
+  {
+    key: "contact-messages",
+    label: "Contact Messages",
+    table: "contact_messages",
+    description: "Review parent messages, update response status and follow up directly.",
+    kind: "enquiries",
+    icon: MessageSquareText,
+    columns: ["name", "phone_number", "email", "subject", "message", "status", "created_at"],
+    statusOptions: ["New", "Replied", "Closed"]
   },
   {
     key: "contact",
@@ -312,6 +325,15 @@ export const adminModules: AdminModule[] = [
     icon: Settings,
     fields: [
       { name: "school_name", label: "School Name", type: "text" },
+      { name: "homepage_headline", label: "Homepage Headline", type: "text" },
+      { name: "homepage_subtitle", label: "Homepage Subtitle", type: "textarea" },
+      { name: "about_text", label: "About School Text", type: "textarea" },
+      { name: "phone_number", label: "Primary Phone Number", type: "text" },
+      { name: "email", label: "School Email", type: "text" },
+      { name: "address", label: "School Address", type: "textarea" },
+      { name: "school_timing", label: "School Timing", type: "text" },
+      { name: "instagram_handle", label: "Instagram Handle", type: "text" },
+      { name: "admission_cta_text", label: "Admission CTA Text", type: "text" },
       { name: "logo_url", label: "School Logo", type: "image" },
       { name: "footer_text", label: "Footer Text", type: "textarea" },
       { name: "copyright_text", label: "Copyright Text", type: "text" },
@@ -330,11 +352,10 @@ export const adminTables = adminModules
   .map((module) => module.table)
   .filter((table): table is string => Boolean(table));
 
-export const enquiryStatuses = ["New", "Contacted", "Follow-up", "Converted", "Closed"];
-
 export const dashboardQuickActions = [
   { label: "Add Notice", moduleKey: "notices", icon: Megaphone },
   { label: "Add Gallery Image", moduleKey: "gallery", icon: ImageIcon },
   { label: "Update Admission Info", moduleKey: "admissions", icon: ClipboardList },
+  { label: "View Contact Messages", moduleKey: "contact-messages", icon: MessageSquareText },
   { label: "View Website", href: "/", icon: FileText }
 ];

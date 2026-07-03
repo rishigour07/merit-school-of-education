@@ -118,6 +118,7 @@ export const defaultContent = {
     {
       name: "Academic Faculty",
       designation: "Teaching Team",
+      qualification: "Trained Educators",
       subject: "All Subjects",
       experience: "Experienced",
       photoUrl: schoolPhotos.teacher,
