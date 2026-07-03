@@ -1,6 +1,6 @@
 -- Merit School of Education Rampura CMS schema
--- Run this in the Supabase SQL editor, create one user in Supabase Auth, then set
--- that user's app_metadata role to "admin" as documented in README.md.
+-- Run this in the Supabase SQL editor, create one user in Supabase Auth, then add
+-- a matching public.admin_profiles row as documented in README.md.
 
 create extension if not exists pgcrypto;
 
@@ -21,6 +21,14 @@ begin
     revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
   end if;
 end $$;
+
+create table if not exists public.admin_profiles (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  name text default 'Merit School Admin',
+  role text not null default 'admin' check (role = 'admin'),
+  created_at timestamptz not null default now()
+);
 
 create table if not exists public.site_settings (
   id uuid primary key default gen_random_uuid(),
@@ -295,6 +303,16 @@ begin
   end loop;
 end $$;
 
+alter table public.admin_profiles enable row level security;
+grant select on public.admin_profiles to authenticated;
+
+drop policy if exists "Admin can read own profile" on public.admin_profiles;
+create policy "Admin can read own profile" on public.admin_profiles
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "Admin can update own profile" on public.admin_profiles;
+
 drop policy if exists "Public can read active site settings" on public.site_settings;
 create policy "Public can read active site settings" on public.site_settings
   for select to anon using (is_active = true);
@@ -361,7 +379,7 @@ begin
   loop
     execute format('drop policy if exists "Admin can manage %s" on public.%I', table_name, table_name);
     execute format(
-      'create policy "Admin can manage %s" on public.%I for all to authenticated using (((select auth.jwt()) -> ''app_metadata'' ->> ''role'') = ''admin'') with check (((select auth.jwt()) -> ''app_metadata'' ->> ''role'') = ''admin'')',
+      'create policy "Admin can manage %s" on public.%I for all to authenticated using (exists (select 1 from public.admin_profiles where user_id = (select auth.uid()) and role = ''admin'')) with check (exists (select 1 from public.admin_profiles where user_id = (select auth.uid()) and role = ''admin''))',
       table_name,
       table_name
     );
@@ -377,18 +395,42 @@ drop policy if exists "Public can read website assets" on storage.objects;
 drop policy if exists "Admins can upload website assets" on storage.objects;
 create policy "Admins can upload website assets" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin');
+  with check (
+    bucket_id = 'website-assets'
+    and exists (
+      select 1 from public.admin_profiles
+      where user_id = (select auth.uid()) and role = 'admin'
+    )
+  );
 
 drop policy if exists "Admins can update website assets" on storage.objects;
 create policy "Admins can update website assets" on storage.objects
   for update to authenticated
-  using (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin')
-  with check (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin');
+  using (
+    bucket_id = 'website-assets'
+    and exists (
+      select 1 from public.admin_profiles
+      where user_id = (select auth.uid()) and role = 'admin'
+    )
+  )
+  with check (
+    bucket_id = 'website-assets'
+    and exists (
+      select 1 from public.admin_profiles
+      where user_id = (select auth.uid()) and role = 'admin'
+    )
+  );
 
 drop policy if exists "Admins can delete website assets" on storage.objects;
 create policy "Admins can delete website assets" on storage.objects
   for delete to authenticated
-  using (bucket_id = 'website-assets' and ((select auth.jwt()) -> 'app_metadata' ->> 'role') = 'admin');
+  using (
+    bucket_id = 'website-assets'
+    and exists (
+      select 1 from public.admin_profiles
+      where user_id = (select auth.uid()) and role = 'admin'
+    )
+  );
 
 insert into public.site_settings (school_name, logo_url, footer_text, copyright_text)
 values (

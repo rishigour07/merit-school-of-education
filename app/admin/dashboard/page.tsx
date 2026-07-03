@@ -27,7 +27,14 @@ export default async function AdminDashboardPage() {
       redirect("/admin/login");
     }
 
-    if (user.app_metadata?.role !== "admin") {
+    const { data: adminProfile, error: profileError } = await supabase
+      .from("admin_profiles")
+      .select("id, user_id, name, role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (profileError || !adminProfile) {
       redirect("/admin/login?error=unauthorized");
     }
 

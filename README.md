@@ -55,12 +55,13 @@ ADMIN_CMS_ENABLED=true
 
 Use either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or the legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-Run `supabase/schema.sql` in the Supabase SQL editor, then create the admin user in Supabase Auth. Mark that user as an administrator by setting `app_metadata.role` to `admin`. For example, run this once in the SQL editor after replacing the email:
+Run `supabase/schema.sql` in the Supabase SQL editor, then create the admin user in Supabase Auth. Add one matching administrator profile using the Auth user's UUID:
 
 ```sql
-update auth.users
-set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb
-where email = 'admin@example.com';
+insert into public.admin_profiles (user_id, name, role)
+values ('AUTH_USER_UUID', 'Merit School Admin', 'admin')
+on conflict (user_id) do update
+set name = excluded.name, role = excluded.role;
 ```
 
 ## Quality Gates

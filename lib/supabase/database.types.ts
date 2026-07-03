@@ -29,6 +29,7 @@ export type Database = {
       contact_messages: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
       contact_details: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
       seo_settings: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
+      admin_profiles: { Row: GenericRow; Insert: GenericRow; Update: GenericRow };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

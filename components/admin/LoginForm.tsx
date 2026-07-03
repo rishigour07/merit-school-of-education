@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
@@ -21,9 +21,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm({ supabaseReady, adminEnabled }: { supabaseReady: boolean; adminEnabled: boolean }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectedFrom = searchParams.get("redirectedFrom") || "/admin/dashboard";
-  const loginIssue = searchParams.get("error");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -48,15 +45,48 @@ export default function LoginForm({ supabaseReady, adminEnabled }: { supabaseRea
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword(values);
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password
+      });
+
       if (signInError) {
         setError(signInError.message);
         return;
       }
-      router.push(redirectedFrom);
+
+      if (!data.user) {
+        setError("Login failed: Supabase did not return a user.");
+        return;
+      }
+
+      const { data: adminProfile, error: profileError } = await supabase
+        .from("admin_profiles")
+        .select("id, user_id, name, role")
+        .eq("user_id", data.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (profileError) {
+        setError(profileError.message);
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (!adminProfile) {
+        setError("Login successful but admin profile not found.");
+        await supabase.auth.signOut();
+        return;
+      }
+
+      router.push("/admin/dashboard");
       router.refresh();
-    } catch {
-      setError("Login failed. Check Supabase configuration.");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "An unexpected login error occurred."
+      );
     } finally {
       setLoading(false);
     }
@@ -113,12 +143,6 @@ export default function LoginForm({ supabaseReady, adminEnabled }: { supabaseRea
                 <code className="break-words rounded bg-white/80 px-3 py-2">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>
                 <code className="break-words rounded bg-white/80 px-3 py-2">ADMIN_CMS_ENABLED=true</code>
               </div>
-            </div>
-          ) : null}
-
-          {loginIssue === "unauthorized" ? (
-            <div className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-bold leading-6 text-rose-700">
-              This account is not authorized as a school administrator.
             </div>
           ) : null}
 
