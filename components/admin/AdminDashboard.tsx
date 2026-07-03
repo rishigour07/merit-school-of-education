@@ -220,6 +220,34 @@ function serializeForField(value: unknown) {
   return value ? String(value) : "";
 }
 
+function fieldDefaults(fields: AdminField[] = [], record?: CmsRecord | null) {
+  return fields.reduce<CmsRecord>((values, field) => {
+    const storedValue = record?.[field.name];
+    const fallbackValue =
+      field.defaultValue ?? (field.type === "boolean" ? false : undefined);
+    values[field.name] = serializeForField(storedValue ?? fallbackValue);
+    return values;
+  }, {});
+}
+
+function displayRecordValue(value: unknown) {
+  if (typeof value === "boolean") {
+    return (
+      <span
+        className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
+          value
+            ? "bg-leaf-50 text-leaf-700"
+            : "bg-slate-100 text-slate-600"
+        }`}
+      >
+        {value ? "Active" : "Inactive"}
+      </span>
+    );
+  }
+
+  return String(value ?? "");
+}
+
 function normalizePayload(fields: AdminField[] = [], values: CmsRecord) {
   return fields.reduce<CmsRecord>((payload, field) => {
     const value = values[field.name];
@@ -358,12 +386,7 @@ export default function AdminDashboard({
       editingRecord ||
       (activeModule.kind === "singleton" && firstRow ? firstRow : null);
 
-    const defaults = (activeModule.fields || []).reduce<CmsRecord>((values, field) => {
-      values[field.name] = serializeForField(nextRecord?.[field.name]);
-      return values;
-    }, {});
-
-    form.reset(defaults);
+    form.reset(fieldDefaults(activeModule.fields, nextRecord));
   }, [activeModule, editingRecord, form, records, tableName]);
 
   function showToast(nextToast: Toast) {
@@ -433,7 +456,7 @@ export default function AdminDashboard({
       }
 
       setEditingRecord(null);
-      form.reset();
+      form.reset(fieldDefaults(activeModule.fields));
       showToast({ type: "success", message: "Content saved successfully." });
     } catch {
       showToast({ type: "error", message: "Save failed. Please check Supabase permissions." });
@@ -707,7 +730,7 @@ export default function AdminDashboard({
                       type="button"
                       onClick={() => {
                         setEditingRecord(null);
-                        form.reset({});
+                        form.reset(fieldDefaults(activeModule.fields));
                       }}
                       className="focus-ring inline-flex items-center gap-2 rounded-full bg-gold-300 px-4 py-2 text-sm font-black text-royal-900"
                     >
@@ -745,7 +768,7 @@ export default function AdminDashboard({
                         type="button"
                         onClick={() => {
                           setEditingRecord(null);
-                          form.reset({});
+                          form.reset(fieldDefaults(activeModule.fields));
                         }}
                         className="focus-ring rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-700"
                       >
@@ -1198,7 +1221,7 @@ function RecordRow({
               ))}
             </select>
           ) : (
-            String(record[column] ?? "")
+            displayRecordValue(record[column])
           )}
         </td>
       ))}
@@ -1250,7 +1273,7 @@ function RecordCard({
               </select>
             ) : (
               <p className="mt-1 break-words font-bold text-slate-700">
-                {String(record[column] ?? "")}
+                {displayRecordValue(record[column])}
               </p>
             )}
           </div>

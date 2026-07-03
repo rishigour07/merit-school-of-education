@@ -37,6 +37,7 @@ export type AdminField = {
   placeholder?: string;
   options?: string[];
   required?: boolean;
+  defaultValue?: string | number | boolean | string[];
 };
 
 export type AdminModule = {
@@ -52,8 +53,8 @@ export type AdminModule = {
 };
 
 const commonFields: AdminField[] = [
-  { name: "is_active", label: "Active", type: "boolean" },
-  { name: "sort_order", label: "Display Order", type: "number", placeholder: "0" }
+  { name: "is_active", label: "Active", type: "boolean", defaultValue: true },
+  { name: "sort_order", label: "Display Order", type: "number", placeholder: "0", defaultValue: 0 }
 ];
 
 export const adminModules: AdminModule[] = [
@@ -339,9 +340,9 @@ export const adminModules: AdminModule[] = [
       { name: "copyright_text", label: "Copyright Text", type: "text" },
       { name: "designed_by_text", label: "Designed By Text", type: "text" },
       { name: "primary_color", label: "Primary Color", type: "text" },
-      { name: "admission_open", label: "Admission Open", type: "boolean" },
-      { name: "floating_whatsapp_visible", label: "Floating WhatsApp Visible", type: "boolean" },
-      { name: "floating_call_visible", label: "Floating Call Visible", type: "boolean" },
+      { name: "admission_open", label: "Admission Open", type: "boolean", defaultValue: true },
+      { name: "floating_whatsapp_visible", label: "Floating WhatsApp Visible", type: "boolean", defaultValue: true },
+      { name: "floating_call_visible", label: "Floating Call Visible", type: "boolean", defaultValue: true },
       ...commonFields
     ],
     columns: ["school_name", "admission_open", "is_active"]
