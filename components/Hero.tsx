@@ -59,7 +59,7 @@ export default function Hero({ content }: { content?: HeroContent }) {
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       >
         <Image
-          src={schoolPhotos.campus}
+          src={hero.heroImageUrl || schoolPhotos.campus}
           alt="Merit School of Education Rampura campus building"
           fill
           priority
